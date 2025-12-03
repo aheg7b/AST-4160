@@ -1,39 +1,19 @@
-            +------------------+
-            |       ESP32       |
-            |                  |
-  3.3V ---->| VCC (SHT31 & MCP)|
-  GND ----->| GND              |
-  21  ----->| SDA (SHT31 & MCP)|
-  22  ----->| SCL (SHT31 & MCP)|
-  34  ----->| LIGHT_SENSOR_PIN  |
-  35  ----->| SOIL_MOISTURE_PIN |
-  25  ----->| PUMP_PIN          |
-  26  ----->| LIGHT_PIN         |
-   2  ----->| ERROR_LED         |
-            +------------------+
+                 +------------------+
+                 |       ESP32       |
+                 |                  |
+3.3V  ---------->| VCC (SHT31 FS304 Soil Temp)
+GND  ----------->| GND
+21   ----------->| SDA (SHT31)
+22   ----------->| SCL (SHT31)
 
-SHT31 (FS304):
- - VCC → 3.3V
- - GND → GND
- - SDA → 21
- - SCL → 22
+3.3V  ---------->| VCC (DHT11 Air Temp/Humidity)
+GND  ----------->| GND
+33   ----------->| DATA (DHT11)
 
-MCP9808 (Soil Temp Probe):
- - VCC → 3.3V
- - GND → GND
- - SDA → 21
- - SCL → 22
+34   ----------->| LIGHT_SENSOR_PIN (Analog)
+35   ----------->| SOIL_MOISTURE_PIN (Analog)
 
-SM100 Soil Moisture:
- - Analog out → 35
- - VCC → 3.3V
- - GND → GND
-
-Light Sensor:
- - Analog out → 34
- - VCC → 3.3V
- - GND → GND
-
-Pump Relay → 25  
-Light Relay → 26  
-Error LED → 2
+25   ----------->| PUMP_PIN (Relay)
+26   ----------->| LIGHT_PIN (Relay)
+2    ----------->| ERROR_LED
+                 +------------------+
