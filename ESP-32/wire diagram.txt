@@ -1,22 +1,13 @@
-ESP32
-
-3.3V ----> SHT31 VCC
-GND  ----> SHT31 GND
-SDA  ----> SHT31 SDA (GPIO 21 default)
-SCL  ----> SHT31 SCL (GPIO 22 default)
-
-3.3V ----> MCP9808 VCC
-GND  ----> MCP9808 GND
-SDA  ----> MCP9808 SDA (shared with SHT31)
-SCL  ----> MCP9808 SCL (shared with SHT31)
-
-MH Light Sensor VCC ----> 3.3V
-MH Light Sensor GND ----> GND
-MH Light Sensor OUT ----> GPIO34 (Analog)
-
-SM100 Soil Moisture VCC ----> 3.3V
-SM100 Soil Moisture GND ----> GND
-SM100 Soil Moisture OUT ----> GPIO35 (Analog)
-
-Pump Relay IN ----> GPIO25
-Light Relay IN ----> GPIO26
+| Component                | ESP32 Pin    | Notes                                  |
+| ------------------------ | ------------ | -------------------------------------- |
+| FS304-SHT31 (Temp/Humid) | SDA → 21     | I2C, 3.3V power, GND                   |
+|                          | SCL → 22     |                                        |
+| MCP9808 (Soil Temp)      | SDA → 21     | Shared I2C bus with SHT31              |
+|                          | SCL → 22     |                                        |
+| SM100 Soil Moisture      | Analog → 35  | GND and 3.3V                           |
+| MH Light Sensor          | Analog → 34  | GND and 3.3V                           |
+| Pump Relay               | Digital → 25 | Connect relay input; relay VCC 5V, GND |
+| Light Relay              | Digital → 26 | Connect relay input; relay VCC 5V, GND |
+| Error LED                | Digital → 2  | Use series resistor ~220Ω to LED GND   |
+| ESP32 3.3V               | Power        | Sensors that require 3.3V              |
+| ESP32 GND                | Ground       | All sensors and relays                 |
