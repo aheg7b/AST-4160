@@ -1,120 +1,110 @@
 import socket
 import threading
-import time
-from device_manager import load_devices, save_devices
-from collections import deque
+import json
+from datetime import datetime
+from flask import Flask, render_template, request
 
-HOST = "0.0.0.0"
-PORT = 5050
+app = Flask(__name__)
 
-# This module exposes DATA (a runtime dict) that app.py will import and use.
-DATA = {}
-DEVICE_NAMES = load_devices()
+DATA_FILE = "devices.json"
+DEVICE_NAMES = {}
+DATA = {}  # store latest device info
+HISTORY = {}  # store historical data
 
-HISTORY_MAX = 200  # keep last N readings per device
+# Load device names
+try:
+    with open(DATA_FILE,"r") as f:
+        DEVICE_NAMES = json.load(f)
+except:
+    DEVICE_NAMES = {}
 
-def parse_float_safe(s, default=None):
+TCP_IP = "0.0.0.0"
+TCP_PORT = 5050
+
+def parse_float_safe(val):
     try:
-        return float(s)
-    except Exception:
-        return default
+        return float(val)
+    except:
+        return 0
 
 def handle_client(conn, addr):
-    """
-    Expect a single packet from ESP-32:
-      MAC;TEMP-C;HUMIDITY;SOIL MOISTURE;SOIL TEMP;PUMP ON/OFF;LIGHT ON/OFF;
-    Respond with:
-      PUMP_CMD;LIGHT_CMD;
-    """
     try:
-        with conn:
-            raw = conn.recv(1024).decode().strip()
-            if not raw:
-                return
-            parts = raw.split(";")
-            # minimum expected fields: MAC, TEMP, HUM, MOIST, SOILT, PUMP, LIGHT
-            if len(parts) < 7:
-                return
+        data = conn.recv(1024).decode().strip()
+        if not data: return
+        parts = data.split(";")
+        if len(parts) < 8: return
 
-            mac, temp, hum, moist, soilt, pump, light = parts[:7]
+        mac, temp, hum, moist, soilt, light_val, pump, light = parts[:8]
 
-            # ensure friendly name exists
-            if mac not in DEVICE_NAMES:
-                DEVICE_NAMES[mac] = mac
-                save_devices(DEVICE_NAMES)
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            now_str = time.strftime("%Y-%m-%d %H:%M:%S")
-            # update runtime data
-            entry = DATA.get(mac, {
-                "name": DEVICE_NAMES.get(mac, mac),
-                "TEMP": temp,
-                "HUM": hum,
-                "MOIST": moist,
-                "SOILT": soilt,
-                "PUMP": pump,
-                "LIGHT": light,
-                "online": True,
-                "last_seen": now_str,
-                "history": deque(maxlen=HISTORY_MAX)  # will be converted to list by templates/api
-            })
+        entry = DATA.get(mac, {})
+        entry.update({
+            "name": DEVICE_NAMES.get(mac, mac),
+            "TEMP": temp,
+            "HUM": hum,
+            "MOIST": moist,
+            "SOILT": soilt,
+            "LIGHT_VAL": light_val,
+            "PUMP": pump,
+            "LIGHT": light,
+            "online": True,
+            "last_seen": now_str
+        })
+        DATA[mac] = entry
 
-            # update fields
-            entry.update({
-                "name": DEVICE_NAMES.get(mac, entry.get("name", mac)),
-                "TEMP": temp,
-                "HUM": hum,
-                "MOIST": moist,
-                "SOILT": soilt,
-                "PUMP": pump,
-                "LIGHT": light,
-                "online": True,
-                "last_seen": now_str
-            })
+        # add to history
+        hist_point = {
+            "ts": now_str,
+            "TEMP": parse_float_safe(temp),
+            "HUM": parse_float_safe(hum),
+            "MOIST": parse_float_safe(moist),
+            "SOILT": parse_float_safe(soilt),
+            "LIGHT_VAL": parse_float_safe(light_val),
+            "PUMP": pump,
+            "LIGHT": light
+        }
+        HISTORY.setdefault(mac, []).append(hist_point)
+        if len(HISTORY[mac])>200:
+            HISTORY[mac] = HISTORY[mac][-200:]
 
-            # append to history (store numeric values where possible)
-            hist_point = {
-                "ts": now_str,
-                "TEMP": parse_float_safe(temp),
-                "HUM": parse_float_safe(hum),
-                "MOIST": parse_float_safe(moist),
-                "SOILT": parse_float_safe(soilt),
-                "PUMP": pump,
-                "LIGHT": light
-            }
-            # if history is a deque keep as is, otherwise create new deque
-            if not isinstance(entry.get("history"), deque):
-                entry["history"] = deque(maxlen=HISTORY_MAX)
-            entry["history"].append(hist_point)
+        # Prepare response (handle AUTO mode)
+        pump_cmd = pump
+        light_cmd = light
 
-            DATA[mac] = entry
+        if pump_cmd=="AUTO":
+            pump_cmd = "ON" if parse_float_safe(moist)<350 else "OFF"
+        if light_cmd=="AUTO":
+            light_cmd = "ON" if parse_float_safe(light_val)<100 else "OFF"
 
-            # Check for pending commands; default to current state if none.
-            pump_cmd = DATA[mac].get("PUMP_CMD", pump)
-            light_cmd = DATA[mac].get("LIGHT_CMD", light)
-            response = f"{pump_cmd};{light_cmd};"
-            conn.sendall(response.encode())
+        response = f"{pump_cmd};{light_cmd};"
+        conn.sendall(response.encode())
+    finally:
+        conn.close()
 
-            # small pause to ensure send completes (connection closes afterwards)
-            time.sleep(0.05)
-
-    except Exception as e:
-        # optional: log error to stdout for debugging
-        print(f"Error handling client {addr}: {e}")
-
-def start_tcp(DATA_ref):
-    """
-    Start the TCP server (blocks). DATA_ref should be the central runtime dict
-    that will be shared with the Flask app (pass the same dict instance).
-    """
-    global DATA
-    DATA = DATA_ref
-
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server.bind((HOST, PORT))
-    server.listen()
-    print(f"TCP server running on {HOST}:{PORT}")
-
+def tcp_server():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((TCP_IP, TCP_PORT))
+    s.listen(5)
+    print(f"TCP server listening on {TCP_IP}:{TCP_PORT}")
     while True:
-        conn, addr = server.accept()
-        threading.Thread(target=handle_client, args=(conn, addr), daemon=True).start()
+        conn, addr = s.accept()
+        threading.Thread(target=handle_client,args=(conn,addr)).start()
+
+@app.route("/")
+def index():
+    return render_template("index.html", data=DATA)
+
+@app.route("/rename", methods=["POST"])
+def rename():
+    mac = request.form.get("mac")
+    new_name = request.form.get("name")
+    if mac and new_name:
+        DEVICE_NAMES[mac] = new_name
+        with open(DATA_FILE,"w") as f:
+            json.dump(DEVICE_NAMES,f)
+    return "OK"
+
+if __name__=="__main__":
+    threading.Thread(target=tcp_server,daemon=True).start()
+    app.run(host="0.0.0.0",port=5000,debug=True)

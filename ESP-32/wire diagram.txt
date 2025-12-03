@@ -1,0 +1,20 @@
+ESP32             Sensor / Device
+-------           --------------------
+3.3V   -------->  VCC DHT11
+GND    -------->  GND DHT11
+GPIO4  -------->  DATA DHT11
+
+3.3V   -------->  VCC MH Light Sensor
+GND    -------->  GND MH Light Sensor
+GPIO34 -------->  Analog Output MH Light
+
+3.3V   -------->  VCC SM100 Soil Moisture
+GND    -------->  GND SM100
+GPIO35 -------->  Analog Output SM100
+
+3.3V   -------->  VCC FS304-SHT
+GND    -------->  GND FS304-SHT
+GPIO32 -------->  Analog Output FS304-SHT
+
+GPIO26 --------> Relay / transistor for Pump (active HIGH)
+GPIO27 --------> Relay / transistor for Light (active HIGH)
