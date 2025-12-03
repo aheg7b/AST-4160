@@ -1,210 +1,108 @@
-/* ===== Global styles ===== */
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f7f8;
-  margin: 0;
-  padding: 0;
-  color: #333;
+:root{
+    --bg: #f5f7fb;
+    --card: #ffffff;
+    --accent: #4f46e5;
+    --muted: #6b7280;
+    --success: #10b981;
+    --danger: #ef4444;
 }
 
-h1 {
-  text-align: center;
-  margin: 20px 0;
-  font-weight: 700;
+body{
+    margin:0;
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: #111827;
+    padding: 24px;
 }
 
-/* ===== Menu styling ===== */
-#menu {
-  padding: 10px 20px;
-  background-color: #fff;
-  border-bottom: 2px solid #ddd;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
+header h1{
+    text-align:center;
+    margin: 8px 0 24px 0;
+    font-size: 28px;
+    color: var(--accent);
 }
 
-#menu label {
-  cursor: pointer;
-  user-select: none;
+#cards{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 18px;
+    max-width: 1100px;
+    margin: 0 auto;
 }
 
-#menu input[type="checkbox"] {
-  margin-right: 5px;
-  cursor: pointer;
+.card{
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+    border-left: 6px solid transparent;
 }
 
-/* Slider styles */
-#menu input[type="range"] {
-  -webkit-appearance: none;
-  width: 150px;
-  height: 8px;
-  background: #ddd;
-  border-radius: 4px;
-  outline: none;
-  cursor: pointer;
-  transition: background 0.3s ease;
+.card.offline{
+    background: #fff5f5;
+    border-left-color: var(--danger);
 }
 
-#menu input[type="range"]:hover {
-  background: #bbb;
+.card-header{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
-#menu input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  background: #4CAF50;
-  cursor: pointer;
-  border-radius: 50%;
-  border: 1px solid #388E3C;
-  transition: background 0.3s ease;
+.device-name{
+    margin:0;
+    font-size: 18px;
+    font-weight: 600;
 }
 
-#menu input[type="range"]::-webkit-slider-thumb:hover {
-  background: #66BB6A;
+.mac{
+    font-size: 12px;
+    color: var(--muted);
 }
 
-/* Firefox */
-#menu input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  background: #4CAF50;
-  cursor: pointer;
-  border-radius: 50%;
-  border: 1px solid #388E3C;
-  transition: background 0.3s ease;
+.card-body .row{
+    margin: 6px 0;
+    font-size: 14px;
 }
 
-#menu input[type="range"]::-moz-range-thumb:hover {
-  background: #66BB6A;
+.card-actions{
+    margin-top: 12px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
 }
 
-/* ===== Table styling ===== */
-table {
-  margin: 20px auto;
-  border-collapse: collapse;
-  width: 90%;
-  max-width: 1200px;
-  background: white;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  table-layout: fixed;
+.btn{
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    background: #e6e9ff;
+    color: #1f2937;
 }
 
-thead {
-  background-color: #4CAF50;
-  color: white;
+.btn.on{
+    background: #d1fae5;
+    color: #065f46;
 }
 
-th, td {
-  padding: 10px 12px;
-  text-align: center;
-  border-bottom: 1px solid #ddd;
-  word-wrap: break-word;
+.btn.off{
+    background: #fee2e2;
+    color: #7f1d1d;
 }
 
-tbody tr:hover {
-  background-color: #f1f1f1;
+.rename{
+    margin-top: 12px;
+    display:flex;
+    gap:10px;
 }
 
-tbody tr.offline {
-  background-color: #ffe6e6;
-  color: #a00;
-}
-
-input[type="text"] {
-  width: 110px;
-  padding: 4px 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: border-color 0.3s ease;
-}
-
-input[type="text"]:focus {
-  outline: none;
-  border-color: #4CAF50;
-}
-
-/* Button styling */
-button {
-  background-color: #4CAF50;
-  border: none;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
-}
-
-button:hover {
-  background-color: #45a049;
-}
-
-/* Scrollable table body for better UX if many devices */
-tbody {
-  display: block;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-thead, tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  table, thead, tbody, th, td, tr {
-    display: block;
-  }
-  
-  thead tr {
-    display: none;
-  }
-  
-  tbody tr {
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 10px;
-    background: #fff;
-  }
-  
-  tbody td {
-    text-align: right;
-    padding-left: 50%;
-    position: relative;
-  }
-  
-  tbody td::before {
-    content: attr(data-label);
-    position: absolute;
-    left: 10px;
-    width: 45%;
-    padding-left: 15px;
-    font-weight: bold;
-    text-align: left;
-  }
-}
-
-/* Pig model popup styling */
-.popup-content {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-/* Loader or placeholder for "loading" states */
-#loading {
-  text-align: center;
-  font-size: 18px;
-  color: #777;
-  margin-top: 40px;
+.rename input{
+    flex:1;
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid #e5e7eb;
 }

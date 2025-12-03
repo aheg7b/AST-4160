@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Crop Monitor</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>Crop Monitor Dashboard</h1>
+    </header>
+
+    <main id="cards">
+        {% if devices|length == 0 %}
+            <p style="text-align:center;">No devices connected yet.</p>
+        {% endif %}
+
+        {% for mac, info in devices.items() %}
+        <section class="card {% if not info['online'] %}offline{% endif %}">
+            <div class="card-header">
+                <h2 class="device-name">{{ info['name'] }}</h2>
+                <span class="mac">{{ mac }}</span>
+            </div>
+
+            <div class="card-body">
+                {% if info['online'] %}
+                    <div class="row"><strong>Temperature:</strong> {{ info['TEMP'] }}°C</div>
+                    <div class="row"><strong>Humidity:</strong> {{ info['HUM'] }}%</div>
+                    <div class="row"><strong>Soil Moisture:</strong> {{ info['MOIST'] }}</div>
+                    <div class="row"><strong>Soil Temp:</strong> {{ info['SOILT'] }}°C</div>
+                {% else %}
+                    <div class="row"><strong>Last seen:</strong> {{ info['last_seen'] }}</div>
+                {% endif %}
+            </div>
+
+            <div class="card-actions">
+                <button class="btn on" onclick="toggle('{{ mac }}','pump','ON')">Pump ON</button>
+                <button class="btn off" onclick="toggle('{{ mac }}','pump','OFF')">Pump OFF</button>
+                <button class="btn on" onclick="toggle('{{ mac }}','light','ON')">Light ON</button>
+                <button class="btn off" onclick="toggle('{{ mac }}','light','OFF')">Light OFF</button>
+            </div>
+
+            <div class="rename">
+                <input type="text" id="name-{{ mac }}" placeholder="Rename device" />
+                <button class="btn" onclick="renameDevice('{{ mac }}')">Save</button>
+            </div>
+        </section>
+        {% endfor %}
+    </main>
+
+<script>
+function toggle(mac, device, state) {
+    fetch('/control', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ mac: mac, device: device, state: state })
+    });
+}
+
+function renameDevice(mac) {
+    const input = document.getElementById('name-' + mac);
+    const name = input.value.trim();
+    if (!name) return;
+    fetch('/rename', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ mac: mac, name: name })
+    }).then(()=>location.reload());
+}
+
+// auto-refresh periodically to update statuses
+setInterval(() => { location.reload(); }, 5000);
+</script>
+</body>
+</html>
