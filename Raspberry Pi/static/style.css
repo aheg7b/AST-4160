@@ -1,0 +1,210 @@
+/* ===== Global styles ===== */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f7f8;
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+h1 {
+  text-align: center;
+  margin: 20px 0;
+  font-weight: 700;
+}
+
+/* ===== Menu styling ===== */
+#menu {
+  padding: 10px 20px;
+  background-color: #fff;
+  border-bottom: 2px solid #ddd;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+#menu label {
+  cursor: pointer;
+  user-select: none;
+}
+
+#menu input[type="checkbox"] {
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+/* Slider styles */
+#menu input[type="range"] {
+  -webkit-appearance: none;
+  width: 150px;
+  height: 8px;
+  background: #ddd;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#menu input[type="range"]:hover {
+  background: #bbb;
+}
+
+#menu input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #4CAF50;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 1px solid #388E3C;
+  transition: background 0.3s ease;
+}
+
+#menu input[type="range"]::-webkit-slider-thumb:hover {
+  background: #66BB6A;
+}
+
+/* Firefox */
+#menu input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #4CAF50;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 1px solid #388E3C;
+  transition: background 0.3s ease;
+}
+
+#menu input[type="range"]::-moz-range-thumb:hover {
+  background: #66BB6A;
+}
+
+/* ===== Table styling ===== */
+table {
+  margin: 20px auto;
+  border-collapse: collapse;
+  width: 90%;
+  max-width: 1200px;
+  background: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  table-layout: fixed;
+}
+
+thead {
+  background-color: #4CAF50;
+  color: white;
+}
+
+th, td {
+  padding: 10px 12px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+  word-wrap: break-word;
+}
+
+tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+tbody tr.offline {
+  background-color: #ffe6e6;
+  color: #a00;
+}
+
+input[type="text"] {
+  width: 110px;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+/* Button styling */
+button {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+/* Scrollable table body for better UX if many devices */
+tbody {
+  display: block;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+thead, tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+  
+  thead tr {
+    display: none;
+  }
+  
+  tbody tr {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    background: #fff;
+  }
+  
+  tbody td {
+    text-align: right;
+    padding-left: 50%;
+    position: relative;
+  }
+  
+  tbody td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 10px;
+    width: 45%;
+    padding-left: 15px;
+    font-weight: bold;
+    text-align: left;
+  }
+}
+
+/* Pig model popup styling */
+.popup-content {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Loader or placeholder for "loading" states */
+#loading {
+  text-align: center;
+  font-size: 18px;
+  color: #777;
+  margin-top: 40px;
+}
