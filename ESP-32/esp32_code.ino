@@ -1,7 +1,7 @@
 #include <WiFi.h>
 #include <Wire.h>
-#include <Adafruit_SHT31.h>      // FS304-SHT
-#include <Adafruit_MCP9808.h>    // Digital soil temp probe
+#include <Adafruit_SHT31.h>      // FS304-SHT31
+#include <Adafruit_MCP9808.h>    // Soil temp probe
 
 // ===== WiFi & Server =====
 const char* ssid = "YOUR_SSID";
@@ -14,11 +14,11 @@ WiFiClient client;
 Adafruit_SHT31 sht31 = Adafruit_SHT31();
 Adafruit_MCP9808 soilTemp = Adafruit_MCP9808();
 
-#define LIGHT_SENSOR_PIN 34
-#define SOIL_MOISTURE_PIN 35
-#define PUMP_PIN 25
-#define LIGHT_PIN 26
-#define ERROR_LED 2        // Built-in LED or external
+#define LIGHT_SENSOR_PIN 34      // Analog input
+#define SOIL_MOISTURE_PIN 35     // Analog input
+#define PUMP_PIN 25              // Digital output
+#define LIGHT_PIN 26             // Digital output
+#define ERROR_LED 2              // Built-in LED or external
 
 // Device MAC
 String deviceMAC;
@@ -43,9 +43,11 @@ void setup() {
   pinMode(LIGHT_PIN, OUTPUT);
   pinMode(ERROR_LED, OUTPUT);
 
-  if (!sht31.begin(0x44)) Serial.println("SHT31 not found!");
-  if (!soilTemp.begin(0x18)) Serial.println("Soil temp probe not found!");
+  // Initialize sensors
+  if (!sht31.begin(0x44)) Serial.println("Error: SHT31 not found!");
+  if (!soilTemp.begin(0x18)) Serial.println("Error: Soil temp probe not found!");
 
+  // Connect WiFi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -77,7 +79,7 @@ void loop() {
   if (now - lastSend > SEND_INTERVAL) {
     lastSend = now;
     if (sendData(temp, humidity, soilMoisture, soilTemperature, lightVal)) {
-      lastSuccess = now;  // reset success timer
+      lastSuccess = now;
     }
   }
 
@@ -95,17 +97,17 @@ void loop() {
   }
 }
 
+// Send sensor data to server
 bool sendData(float temp, float hum, int soilMoist, float soilTempC, int lightVal) {
   if (!client.connected()) {
-    if(!client.connect(serverIP, serverPort)) {
+    if (!client.connect(serverIP, serverPort)) {
       Serial.println("Error: Cannot connect to server");
       return false;
     }
   }
 
-  // Format: MAC;TEMP-C;HUMIDITY;SOIL MOISTURE;SOIL TEMP;PUMP;LIGHT;LIGHT_SENSOR
   String dataPacket = deviceMAC + ";" + String(temp, 1) + ";" + String(hum, 1) + ";" +
-                      String(soilMoist) + ";" + String(soilTempC,1) + ";" +
+                      String(soilMoist) + ";" + String(soilTempC, 1) + ";" +
                       pumpState + ";" + lightState + ";" + String(lightVal);
 
   client.println(dataPacket);
@@ -113,6 +115,7 @@ bool sendData(float temp, float hum, int soilMoist, float soilTempC, int lightVa
   return true;
 }
 
+// Handle incoming commands from server
 void handleCommand(String cmd) {
   cmd.trim();
   if (cmd.startsWith("PUMP=")) pumpState = cmd.substring(5);

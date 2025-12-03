@@ -1,13 +1,39 @@
-| Component                | ESP32 Pin    | Notes                                  |
-| ------------------------ | ------------ | -------------------------------------- |
-| FS304-SHT31 (Temp/Humid) | SDA → 21     | I2C, 3.3V power, GND                   |
-|                          | SCL → 22     |                                        |
-| MCP9808 (Soil Temp)      | SDA → 21     | Shared I2C bus with SHT31              |
-|                          | SCL → 22     |                                        |
-| SM100 Soil Moisture      | Analog → 35  | GND and 3.3V                           |
-| MH Light Sensor          | Analog → 34  | GND and 3.3V                           |
-| Pump Relay               | Digital → 25 | Connect relay input; relay VCC 5V, GND |
-| Light Relay              | Digital → 26 | Connect relay input; relay VCC 5V, GND |
-| Error LED                | Digital → 2  | Use series resistor ~220Ω to LED GND   |
-| ESP32 3.3V               | Power        | Sensors that require 3.3V              |
-| ESP32 GND                | Ground       | All sensors and relays                 |
+            +------------------+
+            |       ESP32       |
+            |                  |
+  3.3V ---->| VCC (SHT31 & MCP)|
+  GND ----->| GND              |
+  21  ----->| SDA (SHT31 & MCP)|
+  22  ----->| SCL (SHT31 & MCP)|
+  34  ----->| LIGHT_SENSOR_PIN  |
+  35  ----->| SOIL_MOISTURE_PIN |
+  25  ----->| PUMP_PIN          |
+  26  ----->| LIGHT_PIN         |
+   2  ----->| ERROR_LED         |
+            +------------------+
+
+SHT31 (FS304):
+ - VCC → 3.3V
+ - GND → GND
+ - SDA → 21
+ - SCL → 22
+
+MCP9808 (Soil Temp Probe):
+ - VCC → 3.3V
+ - GND → GND
+ - SDA → 21
+ - SCL → 22
+
+SM100 Soil Moisture:
+ - Analog out → 35
+ - VCC → 3.3V
+ - GND → GND
+
+Light Sensor:
+ - Analog out → 34
+ - VCC → 3.3V
+ - GND → GND
+
+Pump Relay → 25  
+Light Relay → 26  
+Error LED → 2
