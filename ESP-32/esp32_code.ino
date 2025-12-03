@@ -1,120 +1,106 @@
 #include <WiFi.h>
-#include <DHT.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_SHT31.h> // For FS304-SHT
+#include <Adafruit_MCP9808.h> // For digital soil temp probes like MCP9808
+#include <ArduinoJson.h>
 
-//////////////////////
-// WiFi & Server
-//////////////////////
+// ===== WiFi & Server Config =====
 const char* ssid = "YOUR_SSID";
 const char* password = "YOUR_PASSWORD";
-const char* serverIP = "192.168.1.100";  // Raspberry Pi IP
+const char* serverIP = "RASPBERRY_PI_IP";
 const uint16_t serverPort = 5050;
+WiFiClient client;
 
-//////////////////////
-// Device info
-//////////////////////
-String myMac;
-String pump_state = "OFF";   // can be ON/OFF/AUTO (dashboard logic)
-String light_state = "OFF";
+// ===== Sensors =====
+Adafruit_SHT31 sht31 = Adafruit_SHT31();
+Adafruit_MCP9808 soilTemp = Adafruit_MCP9808();
 
-//////////////////////
-// Sensor pins
-//////////////////////
-#define DHTPIN 4
-#define DHTTYPE DHT11
-DHT dht(DHTPIN, DHTTYPE);
+#define LIGHT_PIN 34 // MH light sensor analog pin
+#define SOIL_MOISTURE_PIN 35 // SM100 analog pin
+#define PUMP_PIN 25
+#define LIGHT_CTRL_PIN 26
 
-#define LIGHTPIN 34      // MH light sensor
-#define SOILMOISTPIN 35  // SM100 soil moisture
-#define SOILTEMPPIN 32   // FS304-SHT analog output
+// Device MAC
+String deviceMAC;
 
-//////////////////////
-// Pump / Light GPIO
-//////////////////////
-#define PUMP_PIN 26
-#define LIGHT_PIN 27
+// Timing
+unsigned long lastSend = 0;
+const unsigned long SEND_INTERVAL = 5000; // ms
+
+// Pump / Light state
+String pumpState = "AUTO";
+String lightState = "AUTO";
 
 void setup() {
   Serial.begin(115200);
-  delay(100);
-
+  Wire.begin();
+  
+  pinMode(LIGHT_PIN, INPUT);
+  pinMode(SOIL_MOISTURE_PIN, INPUT);
   pinMode(PUMP_PIN, OUTPUT);
-  pinMode(LIGHT_PIN, OUTPUT);
+  pinMode(LIGHT_CTRL_PIN, OUTPUT);
 
-  digitalWrite(PUMP_PIN, LOW);
-  digitalWrite(LIGHT_PIN, LOW);
+  // Start sensors
+  if (!sht31.begin(0x44)) Serial.println("SHT31 not found!");
+  if (!soilTemp.begin(0x18)) Serial.println("Soil temp probe not found!");
 
+  // WiFi
   WiFi.begin(ssid, password);
-  Serial.printf("Connecting to WiFi: %s\n", ssid);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("\nWiFi connected!");
-  myMac = WiFi.macAddress();
-  Serial.printf("MAC: %s\n", myMac.c_str());
-
-  dht.begin();
+  Serial.println("WiFi connected");
+  deviceMAC = WiFi.macAddress();
 }
 
 void loop() {
+  unsigned long now = millis();
+
   // Read sensors
-  float temp = dht.readTemperature();
-  float hum = dht.readHumidity();
-  int soilMoist = analogRead(SOILMOISTPIN);  
-  int lightVal = analogRead(LIGHTPIN);       
-  int soilTemp = analogRead(SOILTEMPPIN);    
+  float temp = sht31.readTemperature();
+  float humidity = sht31.readHumidity();
+  float soilTemperature = soilTemp.readTempC();
+  int soilMoisture = analogRead(SOIL_MOISTURE_PIN);
+  int lightVal = analogRead(LIGHT_PIN);
 
-  // Build packet
-  String packet = "";
-  packet += myMac + ";";
-  packet += isnan(temp) ? "0" : String(temp,1) + ";";
-  packet += isnan(hum) ? "0" : String(hum,1) + ";";
-  packet += String(soilMoist) + ";";
-  packet += String(soilTemp) + ";";
-  packet += String(lightVal) + ";";   // light sensor
-  packet += pump_state + ";";
-  packet += light_state + ";";
+  // Control pump/light if in AUTO mode
+  if (pumpState == "AUTO") digitalWrite(PUMP_PIN, soilMoisture < 400 ? HIGH : LOW); 
+  else digitalWrite(PUMP_PIN, pumpState == "ON" ? HIGH : LOW);
 
-  Serial.println("Sending packet:");
-  Serial.println(packet);
+  if (lightState == "AUTO") digitalWrite(LIGHT_CTRL_PIN, lightVal < 300 ? HIGH : LOW); 
+  else digitalWrite(LIGHT_CTRL_PIN, lightState == "ON" ? HIGH : LOW);
 
-  WiFiClient client;
-  if (!client.connect(serverIP, serverPort, 2000)) {
-    Serial.println("Connection failed");
-  } else {
-    client.print(packet);
-
-    // Read server response
-    String resp = "";
-    unsigned long start = millis();
-    while (millis() - start < 2000) {
-      while (client.available()) {
-        char c = client.read();
-        resp += c;
-      }
-      if (resp.length() > 0) break;
-      delay(10);
-    }
-    resp.trim();
-    if (resp.length() > 0) {
-      Serial.printf("Response: %s\n", resp.c_str());
-      int first = resp.indexOf(';');
-      if (first > 0) {
-        String pumpCmd = resp.substring(0, first);
-        int second = resp.indexOf(';', first+1);
-        String lightCmd = (second > first) ? resp.substring(first+1, second) : "";
-        pumpCmd.trim(); lightCmd.trim();
-        if (pumpCmd == "ON" || pumpCmd == "OFF" || pumpCmd == "AUTO") pump_state = pumpCmd;
-        if (lightCmd == "ON" || lightCmd == "OFF" || lightCmd == "AUTO") light_state = lightCmd;
-      }
-    }
-
-    // Apply GPIO states (ON/OFF only; AUTO handled on server)
-    digitalWrite(PUMP_PIN, pump_state=="ON" ? HIGH : LOW);
-    digitalWrite(LIGHT_PIN, light_state=="ON" ? HIGH : LOW);
-
-    client.stop();
+  // Send data every SEND_INTERVAL
+  if (now - lastSend > SEND_INTERVAL) {
+    lastSend = now;
+    sendData(temp, humidity, soilMoisture, soilTemperature, lightVal);
   }
 
-  delay(10000);  // send every 10 sec
+  // Check for incoming commands
+  if (client.connected() && client.available()) {
+    String line = client.readStringUntil('\n');
+    handleCommand(line);
+  }
+}
+
+void sendData(float temp, float hum, int soilMoist, float soilTempC, int lightVal) {
+  if (!client.connected()) {
+    client.connect(serverIP, serverPort);
+  }
+
+  String dataPacket = deviceMAC + ";" + String(temp, 1) + ";" + String(hum, 1) + ";" + 
+                      String(soilMoist) + ";" + String(soilTempC,1) + ";" + 
+                      pumpState + ";" + lightState + ";" + String(lightVal);
+  
+  client.println(dataPacket);
+  Serial.println("Sent: " + dataPacket);
+}
+
+void handleCommand(String cmd) {
+  // Expected: PUMP=ON, PUMP=OFF, PUMP=AUTO, LIGHT=ON, LIGHT=OFF, LIGHT=AUTO
+  cmd.trim();
+  if (cmd.startsWith("PUMP=")) pumpState = cmd.substring(5);
+  if (cmd.startsWith("LIGHT=")) lightState = cmd.substring(6);
 }
