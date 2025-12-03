@@ -10,6 +10,7 @@ DEVICES = [
     {"mac": "AA:BB:CC:01", "name": "Tomatoes"},
     {"mac": "AA:BB:CC:02", "name": "Lettuce"},
     {"mac": "AA:BB:CC:03", "name": "Peppers"},
+    {"mac": "AA:BB:CC:04", "name": "Corn"},
 ]
 
 STATES = ["ON", "OFF", "AUTO"]
