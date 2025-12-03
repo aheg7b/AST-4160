@@ -6,7 +6,7 @@
 // ===== WiFi & Server =====
 const char* ssid = "YOUR_SSID";
 const char* password = "YOUR_PASSWORD";
-const char* serverIP = "RASPBERRY_PI_IP";
+const char* serverIP = "192.168.86.25";
 const uint16_t serverPort = 5050;
 WiFiClient client;
 
