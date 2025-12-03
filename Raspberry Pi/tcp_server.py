@@ -2,18 +2,15 @@ import socket
 import threading
 import json
 from datetime import datetime
-from flask import Flask, render_template, request
-
-app = Flask(__name__)
 
 DATA_FILE = "devices.json"
 DEVICE_NAMES = {}
-DATA = {}  # store latest device info
-HISTORY = {}  # store historical data
+DATA = {}      # latest device info
+HISTORY = {}   # historical data
 
 # Load device names
 try:
-    with open(DATA_FILE,"r") as f:
+    with open(DATA_FILE, "r") as f:
         DEVICE_NAMES = json.load(f)
 except:
     DEVICE_NAMES = {}
@@ -30,9 +27,11 @@ def parse_float_safe(val):
 def handle_client(conn, addr):
     try:
         data = conn.recv(1024).decode().strip()
-        if not data: return
+        if not data:
+            return
         parts = data.split(";")
-        if len(parts) < 8: return
+        if len(parts) < 8:
+            return
 
         mac, temp, hum, moist, soilt, light_val, pump, light = parts[:8]
 
@@ -65,17 +64,18 @@ def handle_client(conn, addr):
             "LIGHT": light
         }
         HISTORY.setdefault(mac, []).append(hist_point)
-        if len(HISTORY[mac])>200:
+        if len(HISTORY[mac]) > 200:
             HISTORY[mac] = HISTORY[mac][-200:]
 
-        # Prepare response (handle AUTO mode)
+        entry["history"] = HISTORY[mac]
+
+        # AUTO mode logic
         pump_cmd = pump
         light_cmd = light
-
-        if pump_cmd=="AUTO":
-            pump_cmd = "ON" if parse_float_safe(moist)<350 else "OFF"
-        if light_cmd=="AUTO":
-            light_cmd = "ON" if parse_float_safe(light_val)<100 else "OFF"
+        if pump_cmd == "AUTO":
+            pump_cmd = "ON" if parse_float_safe(moist) < 350 else "OFF"
+        if light_cmd == "AUTO":
+            light_cmd = "ON" if parse_float_safe(light_val) < 100 else "OFF"
 
         response = f"{pump_cmd};{light_cmd};"
         conn.sendall(response.encode())
@@ -89,22 +89,7 @@ def tcp_server():
     print(f"TCP server listening on {TCP_IP}:{TCP_PORT}")
     while True:
         conn, addr = s.accept()
-        threading.Thread(target=handle_client,args=(conn,addr)).start()
+        threading.Thread(target=handle_client, args=(conn, addr)).start()
 
-@app.route("/")
-def index():
-    return render_template("index.html", data=DATA)
-
-@app.route("/rename", methods=["POST"])
-def rename():
-    mac = request.form.get("mac")
-    new_name = request.form.get("name")
-    if mac and new_name:
-        DEVICE_NAMES[mac] = new_name
-        with open(DATA_FILE,"w") as f:
-            json.dump(DEVICE_NAMES,f)
-    return "OK"
-
-if __name__=="__main__":
-    threading.Thread(target=tcp_server,daemon=True).start()
-    app.run(host="0.0.0.0",port=5000,debug=True)
+def start_tcp():
+    threading.Thread(target=tcp_server, daemon=True).start()

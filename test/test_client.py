@@ -1,38 +1,50 @@
-#!/usr/bin/env python3
-"""
-Simple TCP test client to mimic ESP32 sending one packet and printing server response.
-
-Usage:
-    python3 test_client.py 192.168.1.100 5050 AA:BB:CC:11:22:33
-"""
 import socket
-import sys
 import time
 import random
 
-if len(sys.argv) < 4:
-    print("Usage: python3 test_client.py <server_ip> <port> <mac> [temp] [hum] [moist] [soilt]")
-    sys.exit(1)
+TCP_IP = "127.0.0.1"  # Raspberry Pi IP
+TCP_PORT = 5050
 
-server = sys.argv[1]
-port = int(sys.argv[2])
-mac = sys.argv[3]
+# Simulated devices
+DEVICES = [
+    {"mac": "AA:BB:CC:01", "name": "Tomatoes"},
+    {"mac": "AA:BB:CC:02", "name": "Lettuce"},
+    {"mac": "AA:BB:CC:03", "name": "Peppers"},
+]
 
-# optional arguments
-temp = sys.argv[4] if len(sys.argv) > 4 else f"{23.5 + random.uniform(-1,1):.2f}"
-hum = sys.argv[5] if len(sys.argv) > 5 else f"{55 + random.uniform(-5,5):.2f}"
-moist = sys.argv[6] if len(sys.argv) > 6 else f"{400 + random.randint(-30,30)}"
-soilt = sys.argv[7] if len(sys.argv) > 7 else f"{20.0 + random.uniform(-1,1):.2f}"
+STATES = ["ON", "OFF", "AUTO"]
 
-packet = f"{mac};{temp};{hum};{moist};{soilt};OFF;OFF;"
+def generate_data(device):
+    temp = round(random.uniform(15, 35), 1)
+    hum = round(random.uniform(30, 90), 1)
+    soil_moist = random.randint(200, 800)
+    soil_temp = round(random.uniform(15, 30), 1)
+    light_val = random.randint(0, 1023)
+    pump_state = random.choice(STATES)
+    light_state = random.choice(STATES)
 
-print("Packet:", packet)
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.settimeout(3.0)
+    packet = f"{device['mac']};{temp};{hum};{soil_moist};{soil_temp};{light_val};{pump_state};{light_state};"
+    return packet
+
+def send_packet(packet):
     try:
-        s.connect((server, port))
-        s.sendall(packet.encode())
-        data = s.recv(1024)
-        print("Response:", data.decode().strip())
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(2)
+            s.connect((TCP_IP, TCP_PORT))
+            s.sendall(packet.encode())
+
+            # Read response
+            resp = s.recv(1024).decode().strip()
+            if resp:
+                print(f"Server response: {resp}")
     except Exception as e:
-        print("Error:", e)
+        print(f"Error sending packet: {e}")
+
+if __name__ == "__main__":
+    print("Starting ESP32 simulator for 3 devices...")
+    while True:
+        for device in DEVICES:
+            pkt = generate_data(device)
+            print(f"Sending from {device['name']}: {pkt}")
+            send_packet(pkt)
+        time.sleep(10)  # send every 10 seconds
