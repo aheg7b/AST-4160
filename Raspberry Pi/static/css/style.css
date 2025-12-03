@@ -12,3 +12,9 @@ h1 { text-align: center; margin-bottom: 30px; }
 .sensor-label { font-weight: 500; }
 .form-rename { display: flex; margin-top: 10px; gap: 5px; }
 .form-rename input { flex: 1; }
+
+@keyframes flashRed {
+  0% { border-left-color: red; background-color: #fff0f0; }
+  50% { border-left-color: darkred; background-color: #ffe5e5; }
+  100% { border-left-color: red; background-color: #fff0f0; }
+}

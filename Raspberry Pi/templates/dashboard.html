@@ -16,17 +16,27 @@
       </div>
       <div class="modal-body">
         <canvas id="chartCanvas" height="400"></canvas>
-        <div class="form-check mt-2" id="chart-toggles">
-          <input class="form-check-input" type="checkbox" value="TEMP" id="toggleTEMP" checked>
-          <label class="form-check-label" for="toggleTEMP">Temperature</label>
-          <input class="form-check-input ms-2" type="checkbox" value="HUM" id="toggleHUM" checked>
-          <label class="form-check-label" for="toggleHUM">Humidity</label>
-          <input class="form-check-input ms-2" type="checkbox" value="MOIST" id="toggleMOIST" checked>
-          <label class="form-check-label" for="toggleMOIST">Soil Moisture</label>
-          <input class="form-check-input ms-2" type="checkbox" value="SOILT" id="toggleSOILT" checked>
-          <label class="form-check-label" for="toggleSOILT">Soil Temp</label>
-          <input class="form-check-input ms-2" type="checkbox" value="LIGHT_VAL" id="toggleLIGHT_VAL" checked>
-          <label class="form-check-label" for="toggleLIGHT_VAL">Light</label>
+        <div class="chart-toggles mt-2 d-flex flex-wrap gap-3" id="chart-toggles">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="TEMP" id="toggleTEMP" checked>
+            <label class="form-check-label" for="toggleTEMP">Temperature</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="HUM" id="toggleHUM" checked>
+            <label class="form-check-label" for="toggleHUM">Humidity</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="MOIST" id="toggleMOIST" checked>
+            <label class="form-check-label" for="toggleMOIST">Soil Moisture</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="SOILT" id="toggleSOILT" checked>
+            <label class="form-check-label" for="toggleSOILT">Soil Temp</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="LIGHT_VAL" id="toggleLIGHT_VAL" checked>
+            <label class="form-check-label" for="toggleLIGHT_VAL">Light</label>
+          </div>
         </div>
       </div>
     </div>
