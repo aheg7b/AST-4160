@@ -28,8 +28,9 @@
                     <div class="row"><strong>Humidity:</strong> {{ info['HUM'] }}%</div>
                     <div class="row"><strong>Soil Moisture:</strong> {{ info['MOIST'] }}</div>
                     <div class="row"><strong>Soil Temp:</strong> {{ info['SOILT'] }}°C</div>
+                    <div class="row"><strong>Last seen:</strong> <span class="ts" data-ts="{{ info['last_seen'] }}">{{ info['last_seen'] }}</span></div>
                 {% else %}
-                    <div class="row"><strong>Last seen:</strong> {{ info['last_seen'] }}</div>
+                    <div class="row"><strong>Last seen:</strong> <span class="ts" data-ts="{{ info['last_seen'] }}">{{ info['last_seen'] }}</span></div>
                 {% endif %}
             </div>
 
@@ -38,6 +39,7 @@
                 <button class="btn off" onclick="toggle('{{ mac }}','pump','OFF')">Pump OFF</button>
                 <button class="btn on" onclick="toggle('{{ mac }}','light','ON')">Light ON</button>
                 <button class="btn off" onclick="toggle('{{ mac }}','light','OFF')">Light OFF</button>
+                <button class="btn" onclick="openCharts('{{ mac }}')">Open Charts</button>
             </div>
 
             <div class="rename">
@@ -49,6 +51,7 @@
     </main>
 
 <script>
+// toggle pump/light
 function toggle(mac, device, state) {
     fetch('/control', {
         method: 'POST',
@@ -57,6 +60,7 @@ function toggle(mac, device, state) {
     });
 }
 
+// rename
 function renameDevice(mac) {
     const input = document.getElementById('name-' + mac);
     const name = input.value.trim();
@@ -68,8 +72,45 @@ function renameDevice(mac) {
     }).then(()=>location.reload());
 }
 
+// open charts in a new window
+function openCharts(mac) {
+    window.open('/charts/' + encodeURIComponent(mac), '_blank', 'width=900,height=700');
+}
+
+// friendly timestamp formatting
+function fmtRelative(ts) {
+    // ts expected as "YYYY-MM-DD HH:MM:SS" in local timezone
+    const parts = ts.split(' ');
+    if (parts.length < 2) return ts;
+    const datePart = parts[0].split('-');
+    const timePart = parts[1].split(':');
+    const dt = new Date(
+        parseInt(datePart[0]), parseInt(datePart[1])-1, parseInt(datePart[2]),
+        parseInt(timePart[0]), parseInt(timePart[1]), parseInt(timePart[2])
+    );
+    // relative text
+    const now = new Date();
+    const diff = Math.floor((now - dt) / 1000); // seconds
+    if (diff < 5) return "just now";
+    if (diff < 60) return diff + "s ago";
+    if (diff < 3600) return Math.floor(diff/60) + "m ago";
+    if (diff < 86400) return Math.floor(diff/3600) + "h ago";
+    // else show date short
+    return dt.toLocaleString();
+}
+
+function updateTimestamps() {
+    document.querySelectorAll('.ts').forEach(el => {
+        const ts = el.getAttribute('data-ts');
+        if (ts) el.textContent = fmtRelative(ts);
+    });
+}
+
+updateTimestamps();
+setInterval(updateTimestamps, 5000);
+
 // auto-refresh periodically to update statuses
-setInterval(() => { location.reload(); }, 5000);
+setInterval(() => { location.reload(); }, 15000);
 </script>
 </body>
 </html>

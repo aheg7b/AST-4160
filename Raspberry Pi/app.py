@@ -1,11 +1,21 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, abort
 import threading
 from tcp_server import start_tcp, DATA
 from offline_monitor import start_offline_monitor
 from device_manager import load_devices, save_devices
+from collections import deque
+import time
 
 app = Flask(__name__)
 DEVICE_NAMES = load_devices()
+
+@app.template_filter('friendly_ts')
+def friendly_ts_filter(ts_str):
+    """
+    Jinja filter to return the raw timestamp string; formatting is done client-side.
+    Keep server-side simple.
+    """
+    return ts_str
 
 @app.route("/")
 def dashboard():
@@ -34,7 +44,7 @@ def control():
 @app.route("/rename", methods=["POST"])
 def rename():
     """
-    Optional endpoint to rename a device. Payload: { mac: "...", name: "tomatoes" }
+    Endpoint to rename a device. Payload: { mac: "...", name: "tomatoes" }
     """
     req = request.get_json()
     mac = req.get("mac")
@@ -48,6 +58,25 @@ def rename():
     if mac in DATA:
         DATA[mac]["name"] = name
     return jsonify({"status":"ok"})
+
+@app.route("/charts/<mac>")
+def charts_page(mac):
+    if mac not in DATA:
+        abort(404)
+    return render_template("charts.html", mac=mac, name=DATA[mac].get("name", mac))
+
+@app.route("/api/history/<mac>")
+def api_history(mac):
+    """
+    Return JSON history for the device (list of points: ts, TEMP, HUM, MOIST, SOILT)
+    Convert deque to list.
+    """
+    if mac not in DATA:
+        return jsonify({"status":"error", "reason":"unknown device"}), 404
+    hist = DATA[mac].get("history", [])
+    # convert deque to list of simple dicts
+    hist_list = list(hist) if not isinstance(hist, list) else hist
+    return jsonify({"status":"ok", "history": hist_list})
 
 if __name__ == "__main__":
     # Shared runtime DATA dict

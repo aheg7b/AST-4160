@@ -2,6 +2,7 @@ import socket
 import threading
 import time
 from device_manager import load_devices, save_devices
+from collections import deque
 
 HOST = "0.0.0.0"
 PORT = 5050
@@ -9,6 +10,14 @@ PORT = 5050
 # This module exposes DATA (a runtime dict) that app.py will import and use.
 DATA = {}
 DEVICE_NAMES = load_devices()
+
+HISTORY_MAX = 200  # keep last N readings per device
+
+def parse_float_safe(s, default=None):
+    try:
+        return float(s)
+    except Exception:
+        return default
 
 def handle_client(conn, addr):
     """
@@ -34,8 +43,9 @@ def handle_client(conn, addr):
                 DEVICE_NAMES[mac] = mac
                 save_devices(DEVICE_NAMES)
 
+            now_str = time.strftime("%Y-%m-%d %H:%M:%S")
             # update runtime data
-            DATA[mac] = {
+            entry = DATA.get(mac, {
                 "name": DEVICE_NAMES.get(mac, mac),
                 "TEMP": temp,
                 "HUM": hum,
@@ -44,8 +54,39 @@ def handle_client(conn, addr):
                 "PUMP": pump,
                 "LIGHT": light,
                 "online": True,
-                "last_seen": time.strftime("%Y-%m-%d %H:%M:%S")
+                "last_seen": now_str,
+                "history": deque(maxlen=HISTORY_MAX)  # will be converted to list by templates/api
+            })
+
+            # update fields
+            entry.update({
+                "name": DEVICE_NAMES.get(mac, entry.get("name", mac)),
+                "TEMP": temp,
+                "HUM": hum,
+                "MOIST": moist,
+                "SOILT": soilt,
+                "PUMP": pump,
+                "LIGHT": light,
+                "online": True,
+                "last_seen": now_str
+            })
+
+            # append to history (store numeric values where possible)
+            hist_point = {
+                "ts": now_str,
+                "TEMP": parse_float_safe(temp),
+                "HUM": parse_float_safe(hum),
+                "MOIST": parse_float_safe(moist),
+                "SOILT": parse_float_safe(soilt),
+                "PUMP": pump,
+                "LIGHT": light
             }
+            # if history is a deque keep as is, otherwise create new deque
+            if not isinstance(entry.get("history"), deque):
+                entry["history"] = deque(maxlen=HISTORY_MAX)
+            entry["history"].append(hist_point)
+
+            DATA[mac] = entry
 
             # Check for pending commands; default to current state if none.
             pump_cmd = DATA[mac].get("PUMP_CMD", pump)

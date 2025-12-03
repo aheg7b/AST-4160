@@ -106,3 +106,12 @@ header h1{
     border-radius:8px;
     border:1px solid #e5e7eb;
 }
+
+/* canvas responsiveness */
+canvas {
+    width: 100% !important;
+    height: 240px !important;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(16,24,40,0.04);
+}
