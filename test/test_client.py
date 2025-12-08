@@ -11,6 +11,9 @@ DEVICES = [
     {"mac": "AA:BB:CC:02", "name": "Lettuce"},
     {"mac": "AA:BB:CC:03", "name": "Peppers"},
     {"mac": "AA:BB:CC:04", "name": "Corn"},
+    {"mac": "GAGE IS GAY 1", "name": "Weed"},
+    {"mac": "GAGE IS GAY 2", "name": "Weed"},
+    {"mac": "GAGE IS GAY 3", "name": "Weed"},
 ]
 
 STATES = ["ON", "OFF", "AUTO"]
@@ -48,4 +51,4 @@ if __name__ == "__main__":
             pkt = generate_data(device)
             print(f"Sending from {device['name']}: {pkt}")
             send_packet(pkt)
-        time.sleep(10)  # send every 10 seconds
+        time.sleep(10)  # send every 1 seconds
