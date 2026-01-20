@@ -11,9 +11,9 @@ DEVICES = [
     {"mac": "AA:BB:CC:02", "name": "Lettuce"},
     {"mac": "AA:BB:CC:03", "name": "Peppers"},
     {"mac": "AA:BB:CC:04", "name": "Corn"},
-    {"mac": "GAGE IS GAY 1", "name": "Weed"},
-    {"mac": "GAGE IS GAY 2", "name": "Weed"},
-    {"mac": "GAGE IS GAY 3", "name": "Weed"},
+    {"mac": "AA:BB:CC:05", "name": "Weed"},
+    {"mac": "AA:BB:CC:06", "name": "Weed"},
+    {"mac": "AA:BB:CC:07", "name": "Weed"},
 ]
 
 STATES = ["ON", "OFF", "AUTO"]
@@ -45,7 +45,7 @@ def send_packet(packet):
         print(f"Error sending packet: {e}")
 
 if __name__ == "__main__":
-    print("Starting ESP32 simulator for 3 devices...")
+    print("Starting ESP32 simulator for 7 devices...")
     while True:
         for device in DEVICES:
             pkt = generate_data(device)

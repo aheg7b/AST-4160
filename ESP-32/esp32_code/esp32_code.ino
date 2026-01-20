@@ -12,9 +12,9 @@ DHT dht(DHTPIN, DHTTYPE);
 Adafruit_SHT31 sht31 = Adafruit_SHT31();
 
 // ===== WiFi & Server =====
-const char* ssid = "YOUR_SSID";
-const char* password = "YOUR_PASSWORD";
-const char* serverIP = "192.168.86.25";
+const char* ssid = "CAFNR-IoT";
+const char* password = "g3t0FFl;ne";
+const char* serverIP = "192.168.237.164";
 const uint16_t serverPort = 5050;
 WiFiClient client;
 
